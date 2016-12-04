@@ -17,6 +17,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
 MODULE="spkr"
 
 fases=("Fase4" "Fase5" "Fase6" "Fase7" "Quit")
@@ -33,7 +38,7 @@ function setUp {
 
 function tearDown {
 
-    echo "Descargando el modulo..."
+    printf "${BLUE}Descargando el modulo...{$NC}\n"
 
     lsmod | grep "$MODULE" &> /dev/null
     if [ $? == 0 ]; then
@@ -180,7 +185,7 @@ function fase4 {
 
             "9_1")
                 echo "$TEST9_1"
-                echo "Esta prueba puede tardar mucho (varios minutos)"
+                printf "${RED}OJO:${NC} Esta prueba puede tardar mucho (varios minutos)\n"
                 setUp
                 insmod ../kernel/spkr.ko
                 dd if=songs.bin of=/dev/intspkr bs=4
@@ -188,7 +193,7 @@ function fase4 {
 
             "9_2")
                 echo "$TEST9_2"
-                echo "Esta prueba puede tardar mucho (varios minutos)"
+                printf "${RED}OJO:${NC} Esta prueba puede tardar mucho (varios minutos)\n"
                 setUp
                 insmod ../kernel/spkr.ko
                 dd if=songs.bin of=/dev/intspkr bs=4096
@@ -259,7 +264,7 @@ function fase6 {
     TEST3="3. Esta prueba se centra en el comportamiento de la operación mute cuando coincide con la reproducción de pausas. (se espera 5 segundos entre una prueba y otra)"
     TEST4="4. Debe comprobarse que de los 20 primeros sonidos, debido al reset, sólo se procesa uno, mientras que la segunda tanda de 20 sonidos se procesa de forma normal. "
 
-    # Alert
+    printf "${RED}OJO: ${NC}"
     echo "Antes de comenzar con las pruebas, debe modificar los programas setmute, getmute y reset para incluir en los mismos las definiciones de las operaciones ioctl correspondientes tal como se han definido en el módulo. Recuerde que, como se comentó previamente, el programa reset no sólo incluye la llamada ioctl sino que, a continuación, invoca la llamada fsync, lo que asegura que al finalizar el programa el vaciado se ha completado. "
     echo "Elija un test: "
 
@@ -275,9 +280,9 @@ function fase6 {
                 getmute=$(./getmute)
                 echo "./getmute"
                 if [ "$getmute" == "mute off" ]; then
-                    echo "OK"
+                    printf "${GREEN}OK${NC}\n"
                 else
-                    echo "MAL"
+                    printf "${RED}MAL${NC}\n"
                 fi
 
                 echo "./setmute 1"
@@ -286,9 +291,9 @@ function fase6 {
                 echo "./getmute"
                 getmute2=$(./getmute)
                 if [ "$getmute2" == "mute on" ]; then
-                    echo "OK"
+                    printf "${GREEN}OK${NC}\n"
                 else
-                    echo "MAL"
+                    printf "${RED}MAL${NC}\n"
                 fi
 
                 echo "./setmute 0"
@@ -297,9 +302,9 @@ function fase6 {
                 echo "./getmute"
                 getmute3=$(./getmute)
                 if [ "$getmute3" == "mute off" ]; then
-                    echo "OK"
+                    printf "${GREEN}OK${NC}\n"
                 else
-                    echo "MAL"
+                    printf "${RED}MAL${NC}\n"
                 fi
 
                 ;;
@@ -327,36 +332,36 @@ function fase6 {
             "3")
                 echo "$TEST3"
 
-                # Alert
+                printf "${RED}OJO: ${NC}"
                 echo "Este test esta programado para mostrar el dmesg entre etapas y borrarlo para facilitar la comprobación de la prueba"
                 setUp
                 insmod ../kernel/spkr.ko
 
-                echo "Iniciando Etapa 1..."
+                printf "${BLUE}Iniciando Etapa 1...${NC}\n"
                 ./setmute 0; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 0
                 sleep 5 # TODO: revisar si es tiempo suficiente
-                echo "Dmesg tras etapa 1: "
+                printf "${BLUE}Dmesg tras etapa 1: ${NC}\n"
                 dmesg
                 dmesg --clear
 
-                echo "Iniciando Etapa 2..."
+                printf "${BLUE}Iniciando Etapa 2...${NC}\n"
                 ./setmute 0; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 1
                 sleep 5 # TODO: revisar si es tiempo suficiente
-                echo "Dmesg tras etapa 2: "
+                printf "${BLUE}Dmesg tras etapa 2: ${NC}\n"
                 dmesg
                 dmesg --clear
 
-                echo "Iniciando Etapa 3..."
+                printf "${BLUE}Iniciando Etapa 3...${NC}\n"
                 ./setmute 1; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 0
                 sleep 5 # TODO: revisar si es tiempo suficiente
-                echo "Dmesg tras etapa 3: "
+                printf "${BLUE}Dmesg tras etapa 3: ${NC}\n"
                 dmesg
                 dmesg --clear
 
-                echo "Iniciando Etapa 4..."
+                printf "${BLUE}Iniciando Etapa 4...${NC}\n"
                 ./setmute 1; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 0
                 sleep 5 # TODO: revisar si es tiempo suficiente
-                echo "Dmesg tras etapa 4: "
+                printf "${BLUE}Dmesg tras etapa 4: ${NC}\n"
                 dmesg
 
                 ;;
