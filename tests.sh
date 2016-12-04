@@ -24,7 +24,7 @@ NC='\033[0m'
 
 MODULE="spkr"
 
-fases=("Fase4" "Fase5" "Fase6" "Fase7" "Quit")
+fases=("Fase4" "Fase5" "Fase6" "Quit")
 
 function setUp {
 
