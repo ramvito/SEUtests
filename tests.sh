@@ -250,5 +250,133 @@ function fase5 {
     done
 }
 
+function fase6 {
+
+    tests=("1" "2" "3" "4" "Volver a selección de fase")
+
+    TEST1="1. Esta prueba intenta comprobar si se gestiona correctamente el estado del mute: "
+    TEST2="2. La siguiente prueba va realizando operaciones que enmudecen y desenmudecen el altavoz en distintas circunstancias (en momentos donde se están reproduciéndos sonidos y en momentos en los que no). Para comprobar si la evolución del estado del altavoz es correcta, se recomienda revisar el log del núcleo con dmesg al final de cada etapa y el borrado del mismo antes de comenzar la siguiente. "
+    TEST3="3. Esta prueba se centra en el comportamiento de la operación mute cuando coincide con la reproducción de pausas. (se espera 5 segundos entre una prueba y otra)"
+    TEST4="4. Debe comprobarse que de los 20 primeros sonidos, debido al reset, sólo se procesa uno, mientras que la segunda tanda de 20 sonidos se procesa de forma normal. "
+
+    # Alert
+    echo "Antes de comenzar con las pruebas, debe modificar los programas setmute, getmute y reset para incluir en los mismos las definiciones de las operaciones ioctl correspondientes tal como se han definido en el módulo. Recuerde que, como se comentó previamente, el programa reset no sólo incluye la llamada ioctl sino que, a continuación, invoca la llamada fsync, lo que asegura que al finalizar el programa el vaciado se ha completado. "
+    echo "Elija un test: "
+
+    select test in "${tests[@]}"; do
+
+        case $test in
+
+            "1")
+                echo "$TEST1"
+                setUp
+                insmod ../kernel/spkr.ko
+
+                getmute=$(./getmute)
+                echo "./getmute"
+                if [ "$getmute" == "mute off" ]; then
+                    echo "OK"
+                else
+                    echo "MAL"
+                fi
+
+                echo "./setmute 1"
+                ./setmute 1
+
+                echo "./getmute"
+                getmute2=$(./getmute)
+                if [ "$getmute2" == "mute on" ]; then
+                    echo "OK"
+                else
+                    echo "MAL"
+                fi
+
+                echo "./setmute 0"
+                ./setmute 0
+
+                echo "./getmute"
+                getmute3=$(./getmute)
+                if [ "$getmute3" == "mute off" ]; then
+                    echo "OK"
+                else
+                    echo "MAL"
+                fi
+
+                ;;
+
+            "2")
+
+                setUp
+                insmod ../kernel/spkr.ko
+                ./setmute 1
+                dd if=songs.bin of=/dev/intspkr bs=48 count=1
+                sleep 1
+                ./setmute 0
+                sleep 1
+                ./setmute 1
+                echo etapa1
+                read v
+                dd if=songs.bin of=/dev/intspkr bs=48 count=1
+                echo etapa2
+                read v
+                ./mute 0
+                dd if=songs.bin of=/dev/intspkr bs=48 count=1
+
+                ;;
+
+            "3")
+                echo "$TEST3"
+
+                # Alert
+                echo "Este test esta programado para mostrar el dmesg entre etapas y borrarlo para facilitar la comprobación de la prueba"
+                setUp
+                insmod ../kernel/spkr.ko
+
+                echo "Iniciando Etapa 1..."
+                ./setmute 0; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 0
+                sleep 5 # TODO: revisar si es tiempo suficiente
+                echo "Dmesg tras etapa 1: "
+                dmesg
+                dmesg --clear
+
+                echo "Iniciando Etapa 2..."
+                ./setmute 0; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 1
+                sleep 5 # TODO: revisar si es tiempo suficiente
+                echo "Dmesg tras etapa 2: "
+                dmesg
+                dmesg --clear
+
+                echo "Iniciando Etapa 3..."
+                ./setmute 1; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 0
+                sleep 5 # TODO: revisar si es tiempo suficiente
+                echo "Dmesg tras etapa 3: "
+                dmesg
+                dmesg --clear
+
+                echo "Iniciando Etapa 4..."
+                ./setmute 1; dd if=songs.bin of=/dev/intspkr bs=40 count=1 skip=1; sleep 1; ./setmute 0
+                sleep 5 # TODO: revisar si es tiempo suficiente
+                echo "Dmesg tras etapa 4: "
+                dmesg
+
+                ;;
+
+            "4")
+                echo "$TEST4"
+                setUp
+                insmod ../kernel/spkr.ko
+                dd if=songs.bin of=/dev/intspkr bs=80 count=1; ./reset; dd if=songs.bin of=/dev/intspkr bs=80 count=1 skip=1
+                ;;
+
+            "Volver a selección de fase")
+                init
+                break
+                ;;
+            *)
+                echo Invalid option
+        esac
+    done
+}
+
 # Start
 init
