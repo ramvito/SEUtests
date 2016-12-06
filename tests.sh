@@ -24,7 +24,7 @@ NC='\033[0m'
 
 MODULE="spkr"
 
-fases=("Fase4" "Fase5" "Fase6" "Quit")
+fases=("Fase2" "Fase4" "Fase5" "Fase6" "Quit")
 
 function setUp {
 
@@ -54,6 +54,9 @@ function init {
 
         case $opt in
 
+            "Fase2")
+                fase2
+                ;;
             "Fase4")
                 fase4
                 ;;
@@ -65,6 +68,112 @@ function init {
                 ;;
             "Quit")
                 tearDown
+                break
+                ;;
+            *)
+                echo Invalid option
+        esac
+    done
+}
+
+function fase2_aux {
+
+    printf "${BLUE}comprobando que se ha creado la entrada correcta en /proc/devices ${NC} \n"
+    cat /proc/devices | grep "spkr"
+
+    if [ $? == 0 ]; then
+        printf "${GREEN}OK${NC} \n"
+    else
+        printf "${RED}Error${NC} \n"
+    fi
+
+    printf "${BLUE}comprobando: ls -l /sys/class/speaker/intspkr /dev/intspkr${NC} \n"
+    ls -l /sys/class/speaker/intspkr /dev/intspkr
+
+    if [ $? == 0 ]; then
+        printf "${GREEN}OK${NC} \n"
+    else
+        printf "${RED}Error${NC} \n"
+    fi
+
+    printf "${BLUE}comprobando que el minor por defecto es 0${NC} \n"
+    RES=$(stat -c %T /dev/intspkr)
+
+    if [ $RES == $1 ]; then
+        printf "${GREEN}OK${NC} \n"
+    else
+        printf "${RED}Error${NC} \n"
+    fi
+
+    printf "${BLUE}Eliminando el dispositivo: rmmod spkr${NC} \n"
+    rmmod spkr
+
+    printf "${BLUE}comprobando que se ha eliminado la entrada correcta en /proc/devices ${NC} \n"
+    cat /proc/devices | grep "spkr"
+
+    if [ $? != 0 ]; then
+        printf "${GREEN}OK${NC} \n"
+    else
+        printf "${RED}Error${NC} \n"
+    fi
+
+    printf "${BLUE}comprobando que se ha eliminado: ls -l /sys/class/speaker/intspkr /dev/intspkr${NC} \n"
+    ls -l /sys/class/speaker/intspkr /dev/intspkr
+
+    if [ $? != 0 ]; then
+        printf "${GREEN}OK${NC} \n"
+    else
+        printf "${RED}Error${NC} \n"
+    fi
+}
+
+function fase2 {
+
+    tests=("1" "2" "3" "Volver a selección de fase")
+
+    TEST1="1. Test que prueba que el modulo se registra correctamente con el minor por defecto (0) y se elimina correctamente"
+    TEST2="2. Test que prueba que el modulo se registra correctamente con el minor especificado (1)"
+    TEST3="3. Test que prueba las operaciones de apertura, escritura y cierre"
+
+    MINOR=0
+
+    echo "Elija un test: "
+
+    select test in "${tests[@]}"; do
+
+        case $test in
+
+            "1")
+                echo "$TEST1"
+                setUp
+                insmod ../kernel/spkr.ko
+
+                fase2_aux 0
+
+                ;;
+
+            "2")
+                echo "$TEST2"
+                setUp
+                insmod ../kernel/spkr.ko minor=1
+
+                fase2_aux 1
+
+                ;;
+
+            "3")
+                echo "$TEST3"
+                setUp
+                insmod ../kernel/spkr.ko
+                echo X > /dev/intspkr
+                rmmod spkr
+
+                printf "${BLUE}Salida dmesg tras la prueba...(comprobar la traza, prints)${NC} \n"
+                dmesg
+                ;;
+
+            "Volver a selección de fase")
+                init
                 break
                 ;;
             *)
