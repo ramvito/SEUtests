@@ -433,7 +433,7 @@ function fase6 {
                 dd if=songs.bin of=/dev/intspkr bs=48 count=1
                 echo etapa2
                 read v
-                ./mute 0
+                ./setmute 0
                 dd if=songs.bin of=/dev/intspkr bs=48 count=1
 
                 ;;
